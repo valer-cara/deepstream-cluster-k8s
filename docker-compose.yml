@@ -1,0 +1,10 @@
+version: '2'
+services:
+  ds:
+    build: .
+    command: watch -n1 "echo 'systems running'"
+    network_mode: host
+    volumes:
+      - kubeconfig.sample:/root/.kube/config
+      - .:/app
+      - /app/node_modules
