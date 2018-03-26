@@ -1,4 +1,4 @@
-FROM node:8-alpine
+FROM node:8-alpine AS build
 
 WORKDIR /app
 
@@ -11,4 +11,9 @@ RUN npm install
 
 ADD . .
 
+
+FROM node:8-alpine AS deploy
+WORKDIR /app
+COPY --from=build /app /app
 CMD ["./bin/deepstream"]
+

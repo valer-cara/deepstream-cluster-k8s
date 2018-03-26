@@ -1,0 +1,75 @@
+#TODO: RBAC for ds-discovery
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: ds
+  labels:
+    app: ds
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: ds
+  ports:
+  - name: deepstream-ws
+    port: 6020
+
+---
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: ds
+  name: ds
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: ds
+    spec:
+      serviceAccount: ds-discovery
+      containers:
+      - name: ds
+        image: valercara/deepstream-cluster-k8s
+        imagePullPolicy: Always
+        command:
+          - /bin/sh
+          - -c
+          - |-
+            echo "hey world!"
+            ./bin/deepstream --labels="app=ds" --ip=$(hostname -i)
+
+        ports:
+        - containerPort: 6020
+          protocol: TCP
+          name: deepstream-ws
+        - containerPort: 8080
+          protocol: TCP
+          name: deepstream-http
+        - containerPort: 13001
+          protocol: TCP
+          name: nanomsg-ps
+        - containerPort: 13002
+          protocol: TCP
+          name: nanomsg-pl
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health-check
+            port: 8080
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health-check
+            port: 8080
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
